@@ -1,0 +1,41 @@
+app:
+  message: This is the property file for the ${spring.application.name} specific to DEV Environment
+
+spring:
+  application:
+    name: customerreport
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/customerreport?useSSL=false
+    username: root
+    password: Admin@123
+    testOnBorrow: true
+    testWhileIdle: true
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    validationQuery: SELECT 1
+    max-active: 15
+    max-idle: 10
+    max-wait: 8000
+    initialization-mode: always
+    platform: mysql
+  jpa:
+   database-platform: org.hibernate.dialect.MySQL8Dialect
+   hibernate:
+    ddl-auto: create
+   properties:
+    hibernate:
+     hbm2ddl:
+      import_files: data.sql
+
+
+
+# Updated server properties to get a fixed custom port and also configure error message display
+# at UI side
+server:
+  port: 9191
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: false
