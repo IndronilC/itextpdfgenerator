@@ -22,6 +22,7 @@ public class CustomerController {
     @GetMapping("/customers")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void generateCustomerReport(@RequestBody CustomerRequest customerRequest) {
+     log.info("In method generateCustomerReport");
      InputStreamResource resource = customerReportService.generateCustomerReport(customerRequest);
     }
 
