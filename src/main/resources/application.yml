@@ -6,7 +6,7 @@ spring:
     name: customerreport
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/customerreport?useSSL=false
+    url: jdbc:mysql://localhost:3306/customerreport?allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: Admin@123
     testOnBorrow: true
@@ -22,7 +22,7 @@ spring:
   jpa:
    database-platform: org.hibernate.dialect.MySQL8Dialect
    hibernate:
-    ddl-auto: create
+    ddl-auto: update
    properties:
     hibernate:
      hbm2ddl:
