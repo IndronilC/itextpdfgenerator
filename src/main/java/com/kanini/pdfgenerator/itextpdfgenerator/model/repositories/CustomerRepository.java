@@ -12,11 +12,11 @@ import java.util.UUID;
 @Repository
 public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> {
 
-    @Query("select c from CustomerEntity c where c.customerId = :customerId " +
+    @Query("select c from CustomerEntity c where c.customerId = UUID_TO_BIN(:customerId) " +
             "and c.customerName = :customerName " +
             "and c.dob = :dob")
     public List<CustomerEntity> findByCustomerCriteria(
-            @Param("customerId") UUID customerId,
+            @Param("customerId") String customerId,
             @Param("customerName") String customerName,
             @Param("dob") LocalDate dob);
 

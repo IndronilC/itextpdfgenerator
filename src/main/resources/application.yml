@@ -27,7 +27,14 @@ spring:
     hibernate:
      hbm2ddl:
       import_files: data.sql
-
+   show-sql: true
+logging:
+  level:
+   root: INFO
+   com:
+    kanini:
+     pdfgenerator:
+      itextpdfgenerator: DEBUG
 
 
 # Updated server properties to get a fixed custom port and also configure error message display
