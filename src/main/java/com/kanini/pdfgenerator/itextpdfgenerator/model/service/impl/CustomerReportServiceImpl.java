@@ -11,10 +11,12 @@ import com.kanini.pdfgenerator.itextpdfgenerator.model.service.exception.Custome
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -30,6 +32,10 @@ public class CustomerReportServiceImpl implements CustomerReportService {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    @Value("${kanini.dateformat}")
+    private String dateFormatPattern;
 
     @Override
     public InputStreamResource generateCustomerReport(CustomerRequest customerRequest) {
@@ -78,8 +84,9 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         return convertCustomerEntityToCustomerResponse(customerEntity);
     }
 
-    private static LocalDate getParsedDate(CustomerRequest customerRequest) {
-        return CustomerDateUtil.createParsedDate(customerRequest.getDob());
+    private LocalDate getParsedDate(CustomerRequest customerRequest) {
+       String localDateFormatPattern = dateFormatPattern;
+       return CustomerDateUtil.createParsedDate(customerRequest.getDob(), localDateFormatPattern);
     }
 
     private void logSavedCustomerEntityDetails(CustomerEntity customerEntity) {

@@ -36,7 +36,6 @@ logging:
      pdfgenerator:
       itextpdfgenerator: DEBUG
 
-
 # Updated server properties to get a fixed custom port and also configure error message display
 # at UI side
 server:
@@ -46,3 +45,6 @@ server:
     include-binding-errors: always
     include-stacktrace: on_param
     include-exception: false
+
+kanini:
+ dateformat: dd/MM/yyyy

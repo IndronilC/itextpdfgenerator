@@ -1,7 +1,11 @@
 package com.kanini.pdfgenerator.itextpdfgenerator.common.util.datefunction;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 public class CustomerDateUtil {
     protected CustomerDateUtil(){}
@@ -25,7 +29,8 @@ public class CustomerDateUtil {
         return OffsetDateTime.now();
     }
 
-    public static LocalDate createParsedDate(String strDate) {
-        return LocalDate.parse(strDate);
+    public static LocalDate createParsedDate(String strDate, String dateFormatPattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormatPattern);
+        return LocalDate.parse(strDate, formatter);
     }
 }
