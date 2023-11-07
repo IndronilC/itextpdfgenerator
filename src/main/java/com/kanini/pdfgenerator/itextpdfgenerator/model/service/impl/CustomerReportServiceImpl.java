@@ -1,5 +1,7 @@
 package com.kanini.pdfgenerator.itextpdfgenerator.model.service.impl;
 
+import com.kanini.pdfgenerator.itextpdfgenerator.common.util.datefunction.CustomerDateUtil;
+import com.kanini.pdfgenerator.itextpdfgenerator.common.util.uuidgenerator.UUIDGeneratorUtil;
 import com.kanini.pdfgenerator.itextpdfgenerator.dto.CustomerRequest;
 import com.kanini.pdfgenerator.itextpdfgenerator.dto.CustomerResponse;
 import com.kanini.pdfgenerator.itextpdfgenerator.model.entities.CustomerEntity;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -56,6 +59,43 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         return customerResponseList;
     }
 
+    @Override
+    public CustomerResponse createCustomer(CustomerRequest customerRequest) {
+        try {
+            log.info("In {} method ", CustomerReportServiceImpl.class.getMethod("createCustomer", CustomerRequest.class));
+        } catch (NoSuchMethodException noSuchMethodException) {
+            throw new CustomerBusinessException(noSuchMethodException.getMessage(), noSuchMethodException);
+        }
+        CustomerEntity customerEntity = convertCustomerRequestToCustomerEntity(customerRequest);
+        if(Objects.isNull(customerEntity.getDob())) {
+            customerEntity.setDob(getParsedDate(customerRequest));
+        }
+        customerEntity.setCustomerId(UUIDGeneratorUtil.generateNewUUID());
+        customerEntity.setCreatedAt(CustomerDateUtil.getNow());
+        customerEntity.setUpdatedAt(CustomerDateUtil.getNow());
+        customerEntity = customerRepository.save(customerEntity);
+        logSavedCustomerEntityDetails(customerEntity);
+        return convertCustomerEntityToCustomerResponse(customerEntity);
+    }
+
+    private static LocalDate getParsedDate(CustomerRequest customerRequest) {
+        return CustomerDateUtil.createParsedDate(customerRequest.getDob());
+    }
+
+    private void logSavedCustomerEntityDetails(CustomerEntity customerEntity) {
+        log.debug(customerEntity.getCustomerName());
+        log.debug(customerEntity.getCustomerId().toString());
+        log.debug(customerEntity.getCustomerSurrogateId().toString());
+        log.debug(customerEntity.getDob().toString());
+        log.debug(customerEntity.getNetSalary().toString());
+        log.debug(customerEntity.getGrossSalary().toString());
+    }
+
+    private CustomerEntity convertCustomerRequestToCustomerEntity(CustomerRequest customerRequest) {
+        CustomerEntity customerEntity = this.modelMapper.map(customerRequest, CustomerEntity.class);
+        return customerEntity;
+    }
+
     public CustomerResponse convertCustomerEntityToCustomerResponse(CustomerEntity customerEntity) {
         CustomerResponse customerResponse = this.modelMapper.map(customerEntity, CustomerResponse.class);
         return customerResponse;
@@ -75,9 +115,10 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         CustomerEntity customerEntity = CustomerEntity.builder()
                 .customerId(UUID.fromString(customerRequest.getCustomerId()))
                 .customerName(customerRequest.getCustomerName())
-                .dob(LocalDate.parse(customerRequest.getDob()))
+                .dob(getParsedDate(customerRequest))
                 .build();
 
         return customerEntity;
     }
+
 }

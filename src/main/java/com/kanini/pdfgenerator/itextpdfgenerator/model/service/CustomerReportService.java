@@ -10,6 +10,7 @@ public interface CustomerReportService {
 
     public InputStreamResource generateCustomerReport(CustomerRequest customerRequest);
     public List<CustomerResponse> getCustomerDetails();
+    public CustomerResponse createCustomer(CustomerRequest customerRequest);
 
 
 }
