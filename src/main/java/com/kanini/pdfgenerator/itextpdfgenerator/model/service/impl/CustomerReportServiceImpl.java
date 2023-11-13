@@ -49,7 +49,7 @@ public class CustomerReportServiceImpl implements CustomerReportService {
                 customerEntity.getCustomerName(),
                 customerEntity.getDob());
         log.debug("Retrieved Customer Details below :");
-         customerEntities
+        customerEntities
                 .stream().forEach(getCustomerEntityConsumer());
         return null;
     }
@@ -75,10 +75,8 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         } catch (NoSuchMethodException noSuchMethodException) {
             throw new CustomerBusinessException(noSuchMethodException.getMessage(), noSuchMethodException);
         }
-        CustomerEntity customerEntity = convertCustomerRequestToCustomerEntity(customerRequest);
-        if(Objects.isNull(customerEntity.getDob())) {
-            customerEntity.setDob(getParsedDate(customerRequest));
-        }
+        CustomerEntity customerEntity = getCustomerEntityFromRequest(customerRequest);
+        setDateInCustomerEntity(customerRequest, customerEntity);
         customerEntity.setCustomerId(UUIDGeneratorUtil.generateNewUUID());
         customerEntity.setCreatedAt(CustomerDateUtil.getNow());
         customerEntity.setUpdatedAt(CustomerDateUtil.getNow());
@@ -87,17 +85,30 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         return convertCustomerEntityToCustomerResponse(customerEntity);
     }
 
+    private void setDateInCustomerEntity(CustomerRequest customerRequest, CustomerEntity customerEntity) {
+        if (Objects.isNull(customerEntity.getDob())) {
+            customerEntity.setDob(getParsedDate(customerRequest));
+        }
+    }
+
+    private CustomerEntity getCustomerEntityFromRequest(CustomerRequest customerRequest) {
+        CustomerEntity customerEntity = convertCustomerRequestToCustomerEntity(customerRequest);
+        return customerEntity;
+    }
+
     @Override
     public CustomerResponse getCustomerById(UUID customerId) {
-      Optional<CustomerEntity> opCustomerEntity = Optional.ofNullable(customerRepository.findById(customerId)
-              .orElseThrow(() -> new CustomerBusinessException(
-                      CustomerErrorMsgs.CUSTOMER_ERROR_MSGS_NO_CUST_RESOURCE_FOUND.getErrorValue(),
-                      new ResourceNotFoundException())));
-      // With orElseThrow added the below try catch block will never throw exception
-      // but still this will stay as a documentation with the experience that
-      // NoSuchElementException can be thrown if optional.get() return null
-      // so it will act as an indication or when / if we remove -> orElseThrow
-      // lambda expression
+        Optional<CustomerEntity> opCustomerEntity = getCustomerEntityById(customerId);
+        // With orElseThrow added the below try catch block will never throw exception
+        // but still this will stay as a documentation with the experience that
+        // NoSuchElementException can be thrown if optional.get() return null
+        // so it will act as an indication or when / if we remove -> orElseThrow
+        // lambda expression
+        logCustomerData(opCustomerEntity);
+        return convertCustomerEntityToCustomerResponse(opCustomerEntity.get());
+    }
+
+    private void logCustomerData(Optional<CustomerEntity> opCustomerEntity) {
         try {
             logSavedCustomerEntityDetails(opCustomerEntity.get());
         } catch (Exception e) {
@@ -105,12 +116,36 @@ public class CustomerReportServiceImpl implements CustomerReportService {
                     CustomerErrorMsgs.CUSTOMER_ERROR_MSGS_NO_CUST_RESOURCE_FOUND.getErrorValue(),
                     new NoSuchElementException());
         }
-        return convertCustomerEntityToCustomerResponse(opCustomerEntity.get());
+    }
+
+    private Optional<CustomerEntity> getCustomerEntityById(UUID customerId) {
+        Optional<CustomerEntity> opCustomerEntity = Optional.ofNullable(customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerBusinessException(
+                        CustomerErrorMsgs.CUSTOMER_ERROR_MSGS_NO_CUST_RESOURCE_FOUND.getErrorValue(),
+                        new ResourceNotFoundException())));
+
+        return opCustomerEntity;
+    }
+
+    @Override
+    public CustomerResponse updateCustomer(
+            UUID customerId,
+            CustomerRequest customerRequest) {
+        Optional<CustomerEntity> optionalCustomerEntity = getCustomerEntityById(customerId);
+        logCustomerData(optionalCustomerEntity);
+        CustomerEntity customerEntity = getCustomerEntityFromRequest(customerRequest);
+        setDateInCustomerEntity(customerRequest, customerEntity);
+        customerEntity.setCustomerId(UUIDGeneratorUtil.generateNewUUID());
+        customerEntity.setCreatedAt(CustomerDateUtil.getNow());
+        customerEntity.setUpdatedAt(CustomerDateUtil.getNow());
+        customerEntity = customerRepository.save(customerEntity);
+        logSavedCustomerEntityDetails(customerEntity);
+        return convertCustomerEntityToCustomerResponse(customerEntity);
     }
 
     private LocalDate getParsedDate(CustomerRequest customerRequest) {
-       String localDateFormatPattern = dateFormatPattern;
-       return CustomerDateUtil.createParsedDate(customerRequest.getDob(), localDateFormatPattern);
+        String localDateFormatPattern = dateFormatPattern;
+        return CustomerDateUtil.createParsedDate(customerRequest.getDob(), localDateFormatPattern);
     }
 
     private void logSavedCustomerEntityDetails(CustomerEntity customerEntity) {
@@ -132,7 +167,7 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         return customerResponse;
     }
 
-    private  Consumer<CustomerEntity> getCustomerEntityConsumer() {
+    private Consumer<CustomerEntity> getCustomerEntityConsumer() {
         return localCustomerEntity -> {
             log.debug(localCustomerEntity.getCustomerName());
             log.debug(localCustomerEntity.getCustomerId().toString());

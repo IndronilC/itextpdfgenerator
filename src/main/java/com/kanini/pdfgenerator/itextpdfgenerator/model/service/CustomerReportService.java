@@ -15,5 +15,5 @@ public interface CustomerReportService {
     public CustomerResponse getCustomerById(UUID customerId);
 
 
-
+   public CustomerResponse updateCustomer(UUID customerId, CustomerRequest customerRequest);
 }
