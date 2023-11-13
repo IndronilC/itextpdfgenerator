@@ -1,5 +1,6 @@
 package com.kanini.pdfgenerator.itextpdfgenerator.model.service.impl;
 
+import com.kanini.pdfgenerator.itextpdfgenerator.common.error.CustomerErrorMsgs;
 import com.kanini.pdfgenerator.itextpdfgenerator.common.util.datefunction.CustomerDateUtil;
 import com.kanini.pdfgenerator.itextpdfgenerator.common.util.uuidgenerator.UUIDGeneratorUtil;
 import com.kanini.pdfgenerator.itextpdfgenerator.dto.CustomerRequest;
@@ -8,6 +9,7 @@ import com.kanini.pdfgenerator.itextpdfgenerator.model.entities.CustomerEntity;
 import com.kanini.pdfgenerator.itextpdfgenerator.model.repositories.CustomerRepository;
 import com.kanini.pdfgenerator.itextpdfgenerator.model.service.CustomerReportService;
 import com.kanini.pdfgenerator.itextpdfgenerator.model.service.exception.CustomerBusinessException;
+import com.kanini.pdfgenerator.itextpdfgenerator.model.service.exception.cause.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +18,10 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -82,6 +85,27 @@ public class CustomerReportServiceImpl implements CustomerReportService {
         customerEntity = customerRepository.save(customerEntity);
         logSavedCustomerEntityDetails(customerEntity);
         return convertCustomerEntityToCustomerResponse(customerEntity);
+    }
+
+    @Override
+    public CustomerResponse getCustomerById(UUID customerId) {
+      Optional<CustomerEntity> opCustomerEntity = Optional.ofNullable(customerRepository.findById(customerId)
+              .orElseThrow(() -> new CustomerBusinessException(
+                      CustomerErrorMsgs.CUSTOMER_ERROR_MSGS_NO_CUST_RESOURCE_FOUND.getErrorValue(),
+                      new ResourceNotFoundException())));
+      // With orElseThrow added the below try catch block will never throw exception
+      // but still this will stay as a documentation with the experience that
+      // NoSuchElementException can be thrown if optional.get() return null
+      // so it will act as an indication or when / if we remove -> orElseThrow
+      // lambda expression
+        try {
+            logSavedCustomerEntityDetails(opCustomerEntity.get());
+        } catch (Exception e) {
+            throw new CustomerBusinessException(
+                    CustomerErrorMsgs.CUSTOMER_ERROR_MSGS_NO_CUST_RESOURCE_FOUND.getErrorValue(),
+                    new NoSuchElementException());
+        }
+        return convertCustomerEntityToCustomerResponse(opCustomerEntity.get());
     }
 
     private LocalDate getParsedDate(CustomerRequest customerRequest) {
