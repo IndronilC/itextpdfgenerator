@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -133,14 +134,43 @@ public class CustomerReportServiceImpl implements CustomerReportService {
             CustomerRequest customerRequest) {
         Optional<CustomerEntity> optionalCustomerEntity = getCustomerEntityById(customerId);
         logCustomerData(optionalCustomerEntity);
-        CustomerEntity customerEntity = getCustomerEntityFromRequest(customerRequest);
-        setDateInCustomerEntity(customerRequest, customerEntity);
-        customerEntity.setCustomerId(UUIDGeneratorUtil.generateNewUUID());
-        customerEntity.setCreatedAt(CustomerDateUtil.getNow());
-        customerEntity.setUpdatedAt(CustomerDateUtil.getNow());
-        customerEntity = customerRepository.save(customerEntity);
-        logSavedCustomerEntityDetails(customerEntity);
-        return convertCustomerEntityToCustomerResponse(customerEntity);
+        CustomerEntity customerEntityToUpdate = getCustomerEntityForUpdate(
+                optionalCustomerEntity.get(), customerRequest);
+        customerEntityToUpdate = customerRepository.save(customerEntityToUpdate);
+        logSavedCustomerEntityDetails(customerEntityToUpdate);
+        return convertCustomerEntityToCustomerResponse(customerEntityToUpdate);
+    }
+
+    private CustomerEntity getCustomerEntityForUpdate(
+            CustomerEntity customerEntity,
+            CustomerRequest customerRequest) {
+        CustomerEntity localCustomerEntity = customerEntity;
+        localCustomerEntity.setCustomerName(getCustomerName(customerEntity, customerRequest));
+        localCustomerEntity.setDob(getDob(customerEntity, customerRequest));
+        localCustomerEntity.setGrossSalary(getGrossSalary(customerEntity, customerRequest));
+        localCustomerEntity.setNetSalary(getNetSalary(customerEntity, customerRequest));
+        localCustomerEntity.setUpdatedAt(CustomerDateUtil.getNow());
+        return localCustomerEntity;
+    }
+
+    private static BigDecimal getNetSalary(CustomerEntity customerEntity, CustomerRequest customerRequest) {
+        return Objects.nonNull(customerRequest.getNetSalary()) ?
+                customerRequest.getNetSalary() : customerEntity.getNetSalary();
+    }
+
+    private static BigDecimal getGrossSalary(CustomerEntity customerEntity, CustomerRequest customerRequest) {
+        return Objects.nonNull(customerRequest.getGrossSalary()) ?
+                customerRequest.getGrossSalary() : customerEntity.getGrossSalary();
+    }
+
+    private LocalDate getDob(CustomerEntity customerEntity, CustomerRequest customerRequest) {
+        return Objects.nonNull(customerRequest.getDob())
+                ? getParsedDate(customerRequest) : customerEntity.getDob();
+    }
+
+    private String getCustomerName(CustomerEntity customerEntity, CustomerRequest customerRequest) {
+        return Objects.nonNull(customerRequest.getCustomerName())
+                ? customerRequest.getCustomerName() : customerEntity.getCustomerName();
     }
 
     private LocalDate getParsedDate(CustomerRequest customerRequest) {
